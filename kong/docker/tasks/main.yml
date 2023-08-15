@@ -1,0 +1,35 @@
+- name: Install docker depedancies
+  apt:
+    pkg:
+    - ca-certificates
+    - curl
+    - gnupg
+
+- name: add Docker apt-key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: GET kernel
+  command: lsb_release -cs
+  register: result
+
+- name: GET --print-architecture
+  command: dpkg --print-architecture
+  register: arc
+
+- name: add docker deb repository
+  apt_repository:
+    filename: docker.list
+    repo: deb [arch={{ arc.stdout }}] https://download.docker.com/linux/ubuntu {{ result.stdout }} stable
+    state: present
+
+- name: Install docker
+  apt:
+    pkg:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+    update_cache: yes

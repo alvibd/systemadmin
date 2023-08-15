@@ -1,0 +1,17 @@
+- name: create directory for kong
+  file:
+    path: $HOME/kong-2.8.3/conf/
+    state: directory
+- name: create kong.conf
+  copy:
+    dest: $HOME/kong-2.8.3/conf/kong.yml
+    src: kong.yml
+- name: create docker-compose file
+  copy:
+    dest: $HOME/kong-2.8.3/docker-compose.yaml
+    src: docker-compose.yaml
+
+- name: start kong
+  args:
+    chdir: /root/kong-2.8.3/
+  command: docker compose -f $HOME/kong-2.8.3/docker-compose.yaml up -d

@@ -1,0 +1,5 @@
+- ssh to server and install ansible: `sudo apt install ansible`
+- create your inventory file
+- update the site.yaml file to point to your inventory
+- run ansible-playbook: `ansible-playbook site.yaml --ask-become-pass`
+- curl to your server and kong ports to check

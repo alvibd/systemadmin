@@ -1,0 +1,59 @@
+---
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: install dependancies
+      apt:
+        update_cache: yes
+        pkg:
+        - build-essential
+        - libpcre3
+        - libpcre3-dev
+        - zlib1g
+        - zlib1g-dev
+        - libssl-dev
+        - libgd-dev
+        - libxml2
+        - libxml2-dev
+        - uuid-dev
+    - name: Download and unarchive nginx binaries
+      unarchive:
+        src: http://nginx.org/download/nginx-1.23.1.tar.gz
+        dest: $HOME
+        remote_src: yes
+    - name: configure nginx
+      shell: ./configure --prefix=/var/www/html --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log --with-pcre --lock-path=/var/lock/nginx.lock --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules --with-http_v2_module --with-stream=dynamic --with-http_addition_module --with-http_mp4_module
+      args:
+        chdir: $HOME/nginx-1.23.1/
+    - name: build the default target
+      make:
+        chdir: $HOME/nginx-1.23.1/
+    - name: install nginx
+      make:
+        chdir: $HOME/nginx-1.23.1/
+        target: install
+    - name: create nginx service
+      copy:
+        dest: /lib/systemd/system/nginx.service
+        content: |
+                 [Unit]
+                 Description=The NGINX HTTP and reverse proxy server
+                 After=syslog.target network-online.target remote-fs.target nss-lookup.target
+                 Wants=network-online.target
+                        
+                 [Service]
+                 Type=forking
+                 PIDFile=/var/run/nginx.pid
+                 ExecStartPre=/usr/sbin/nginx -t
+                 ExecStart=/usr/sbin/nginx
+                 ExecReload=/usr/sbin/nginx -s reload
+                 ExecStop=/bin/kill -s QUIT $MAINPID
+                 PrivateTmp=true
+                         
+                 [Install]
+                 WantedBy=multi-user.target
+    - name: start and enable nginx server
+      systemd:
+        name: nginx
+        state: started
+        enabled: true

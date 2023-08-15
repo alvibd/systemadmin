@@ -1,0 +1,15 @@
+- name: install supervisord
+  apt:
+    name: supervisor
+    state: present
+    update_cache: yes
+
+- name: create kong.conf for supervisor
+  copy:
+    dest: /etc/supervisor/conf.d/kong.conf
+    src: kong.conf
+
+- name: read supervisor conf
+  supervisorctl:
+    name: kong
+    state: present
